@@ -1,0 +1,139 @@
+# Simple prompt: directory (git info) $
+PS1='%F{blue}%B%~%b%f${vcs_info_msg_0_} %(?.%F{green}$%f.%F{red}$%f) '
+
+export PATH="/opt/homebrew/bin:$PATH"
+export PATH="/opt/homebrew/sbin:$PATH"
+
+[[ -r "/opt/homebrew/etc/profile.d/zsh_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/zsh_completion.sh"
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519 2> /dev/null
+
+# History configuration
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+setopt HIST_IGNORE_DUPS
+setopt HIST_FIND_NO_DUPS
+setopt SHARE_HISTORY
+
+# Basic options
+setopt AUTO_CD              # cd by typing directory name
+setopt CORRECT              # command correction
+setopt NO_BEEP              # no beeping
+
+# Completion system
+autoload -Uz compinit && compinit
+
+# Case-insensitive completion
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' menu select
+
+# Git integration for prompt
+autoload -Uz vcs_info
+precmd() { vcs_info }
+setopt PROMPT_SUBST
+
+# Configure vcs_info for git
+zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:*' check-for-changes true
+zstyle ':vcs_info:*' unstagedstr ' *'
+zstyle ':vcs_info:*' stagedstr ' +'
+zstyle ':vcs_info:git:*' formats ' (%b%u%c%m)'
+zstyle ':vcs_info:git:*' actionformats ' (%b|%a%u%c%m)'
+
+zstyle ':vcs_info:git*+set-message:*' hooks git-untracked git-aheadbehind
+
++vi-git-untracked() {
+    if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) == 'true' ]] && \
+       git status --porcelain | grep -q '^??'; then
+        hook_com[staged]+=' ?'
+    fi
+}
+
++vi-git-aheadbehind() {
+    local ahead behind
+    local -a gitstatus
+    ahead=$(git rev-list ${hook_com[branch]}@{upstream}..HEAD 2>/dev/null | wc -l | tr -d ' ')
+    behind=$(git rev-list HEAD..${hook_com[branch]}@{upstream} 2>/dev/null | wc -l | tr -d ' ')
+    (( $ahead )) && gitstatus+=( "↑ ${ahead}" )
+    (( $behind )) && gitstatus+=( "↓ ${behind}" )
+    hook_com[misc]+=${(j::)gitstatus}
+}
+
+# Aliases
+alias drink='brew update && brew upgrade && brew cleanup'
+alias grep='grep --color=auto'
+alias s='sesh connect $(sesh list | fzf)'
+
+# Git aliases
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git log --oneline --graph --decorate'
+alias gd='git diff'
+
+# Key bindings
+bindkey '^[[A' history-search-backward  # Up arrow
+bindkey '^[[B' history-search-forward   # Down arrow
+
+# Integrations
+if which zoxide >/dev/null;then
+  eval "$(zoxide init zsh)"
+fi
+
+if which direnv >/dev/null;then
+  eval "$(direnv hook zsh)"
+fi
+
+if which fzf >/dev/null;then
+  eval "$(fzf --zsh)"
+fi
+
+if which eza >/dev/null;then
+  alias ls="eza"
+  alias ll="eza -lghF"
+  alias la="eza -a"
+else 
+  alias ls='ls --color=auto'
+  alias ll='ls -lah'
+  alias la='ls -A'
+fi
+
+if [[ -n $ZMX_SESSION ]]; then
+  export PS1="[$ZMX_SESSION] ${PS1}"
+fi
+
+if command -v zmx &> /dev/null; then
+  eval "$(zmx completions zsh)"
+fi
+
+# Amp CLI
+export PATH="/Users/joris/.amp/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+
+function sesh-sessions() {
+  {
+    exec </dev/tty
+    exec <&1
+    local session
+    session=$(sesh list -t -c | fzf --height 40% --reverse --border-label ' sesh ' --border --prompt '⚡  ')
+    zle reset-prompt > /dev/null 2>&1 || true
+    [[ -z "$session" ]] && return
+    sesh connect $session
+  }
+}
+
+zle     -N             sesh-sessions
+bindkey -M emacs '\es' sesh-sessions
+bindkey -M vicmd '\es' sesh-sessions
+bindkey -M viins '\es' sesh-sessions
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+eval "$(mise activate zsh)"
+
+export PATH="$HOME/.emacs.d/bin:$PATH"
