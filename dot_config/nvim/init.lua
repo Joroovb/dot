@@ -36,6 +36,9 @@ opt.updatetime = 250
 -- timeoutlen: Time (ms) to wait for a mapped sequence to complete
 opt.timeoutlen = 300
 
+-- clipboard: Use system clipboard when yanking/deleting
+opt.clipboard:append('unnamedplus')
+
 -- ============================================================================
 -- Keymaps
 -- ============================================================================
@@ -62,6 +65,9 @@ map("<C-h>", "<CMD>TmuxNavigateLeft<CR>", "")
 map("<C-j>", "<CMD>TmuxNavigateDown<CR>", "")
 map("<C-k>", "<CMD>TmuxNavigateUp<CR>", "")
 map("<C-l>", "<CMD>TmuxNavigateRight<CR>", "")
+
+map("<leader>ws", "<CMD>split<CR>", "Create horizontal split")
+map("<leader>ww", "<CMD>vsplit<CR>", "Create vertical split")
 
 -- ============================================================================
 -- LSP Configuration
@@ -233,13 +239,11 @@ local function setup_plugins()
   -- Automatically installs language servers listed in ensure_installed on first launch
   require("mason-lspconfig").setup {
     ensure_installed = {
-      "gopls",         -- Go
-      "lua_ls",        -- Lua
-      "pyright",       -- Python
-      "ts_ls",         -- TypeScript/JavaScript
-      "rust_analyzer", -- Rust
-      "tinymist",      -- Typst
-      "nil_ls",
+      "gopls",        -- Go
+      "lua_ls",       -- Lua
+      "basedpyright", -- Python
+      "ts_ls",        -- TypeScript/JavaScript
+      "ruff",
     },
   }
 
@@ -361,6 +365,7 @@ now(function()
       javascript = { "prettierd", "prettier", stop_after_first = true },
       typescript = { "prettierd", "prettier", stop_after_first = true },
       typescriptreact = { "prettierd", "prettier", stop_after_first = true },
+      python = { "ruff_organize_imports", "ruff_format", lsp_format = "fallback" },
     },
   })
 end)
