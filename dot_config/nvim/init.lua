@@ -248,7 +248,9 @@ local function setup_plugins()
   }
 
   -- Blink.cmp: Fast completion engine with LSP integration
-  require("blink.cmp").setup({
+  local blink = require("blink.cmp")
+  blink.build():pwait()
+  blink.setup({
     signature = { enabled = true },
     appearance = {
       use_nvim_cmp_as_default = false,
@@ -293,7 +295,7 @@ local function setup_plugins()
     },
 
     -- Fuzzy matching: Prefer Rust implementation for speed
-    fuzzy = { implementation = "prefer_rust", prebuilt_binaries = { force_version = "v1.8.0" } }
+    fuzzy = { implementation = "prefer_rust_with_warning" }
   })
 end
 
@@ -313,7 +315,12 @@ vim.pack.add({
   "https://github.com/blazkowolf/gruber-darker.nvim",  -- Gruber Darker colorscheme
   "https://github.com/folke/trouble.nvim",             -- Diagnostics UI
   "https://github.com/christoomey/vim-tmux-navigator", -- Seamless vim/tmux navigation
-  "https://github.com/saghen/blink.cmp",               -- Completion engine
+  {
+    src = "https://github.com/saghen/blink.cmp",       -- Completion engine
+    version = vim.version.range("v1.*"),
+  },
+  "https://github.com/lewis6991/gitsigns.nvim",
+  "https://github.com/saghen/blink.lib", -- Completion engine
   "https://github.com/nvim-lua/plenary.nvim",
   "https://github.com/nvim-telescope/telescope.nvim",
   "https://github.com/jiaoshijie/undotree",

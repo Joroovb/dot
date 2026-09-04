@@ -2,17 +2,21 @@
 PS1='%F{blue}%B%~%b%f${vcs_info_msg_0_} %(?.%F{green}$%f.%F{red}$%f) '
 
 if [[ $(uname) == "Darwin" ]]; then
-  export PATH="/opt/homebrew/bin:$PATH"
-  export PATH="/opt/homebrew/sbin:$PATH"
 
-  [[ -r "/opt/homebrew/etc/profile.d/zsh_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/zsh_completion.sh"
+	case "$(uname -m)" in
+		arm64)
+		  [[ -r "/opt/homebrew/etc/profile.d/zsh_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/zsh_completion.sh"
+		  eval "$(/opt/homebrew/bin/brew shellenv)"
 
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+		  alias drink='brew update && brew upgrade && brew cleanup'
+		  alias grep='grep --color=auto'
+		;;
+		x86_64)
+			source /opt/local/share/nvm/init-nvm.sh
+		;;
+	esac
 
   ssh-add --apple-use-keychain ~/.ssh/id_ed25519 2> /dev/null
-
-  alias drink='brew update && brew upgrade && brew cleanup'
-  alias grep='grep --color=auto'
 fi
 
 # History configuration
@@ -67,6 +71,9 @@ zstyle ':vcs_info:git*+set-message:*' hooks git-untracked git-aheadbehind
     hook_com[misc]+=${(j::)gitstatus}
 }
 
+# Exports
+export EDITOR=nvim
+
 # Aliases
 alias s='sesh connect $(sesh list | fzf)'
 
@@ -103,6 +110,10 @@ else
   alias ls='ls --color=auto'
   alias ll='ls -lah'
   alias la='ls -A'
+fi
+
+if which go >/dev/null;then
+  export PATH="$PATH:$(go env GOBIN)"
 fi
 
 if which nvm >/dev/null;then
